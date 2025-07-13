@@ -1,16 +1,23 @@
 apiVersion: automation.cloudbees.io/v1alpha1
 kind: workflow
-name: My workflow
+name: golang-build-template
 on:
   push:
     branches:
-      - "**"
+      - main
   workflow_dispatch:
 jobs:
   build:
     steps:
-      - name: Say hello
+      - name: Set up Go
         uses: docker://golang:1.20.3-alpine3.17
         shell: sh
         run: |
-          echo "hello world"
+          go version
+          go mod tidy
+          go build -v .
+      - name: Run tests
+        uses: docker://golang:1.20.3-alpine3.17
+        shell: sh
+        run: |
+          go test ./...
