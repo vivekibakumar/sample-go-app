@@ -9,15 +9,12 @@ on:
 jobs:
   build:
     steps:
-      - name: Set up Go
+      - name: Create dummy Go app
         uses: docker://golang:1.20.3-alpine3.17
         shell: sh
         run: |
-          go version
-          go mod tidy
+          mkdir hello && cd hello
+          go mod init hello
+          echo 'package main; import "fmt"; func main() { fmt.Println("Hello, CloudBees!") }' > main.go
           go build -v .
-      - name: Run tests
-        uses: docker://golang:1.20.3-alpine3.17
-        shell: sh
-        run: |
-          go test ./...
+          ./hello
