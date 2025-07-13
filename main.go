@@ -1,75 +1,42 @@
 package main
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
-	"io/ioutil"
+	"fmt"
 	"log"
-	"net/http"
 	"os"
-	"strconv"
-	"strings"
 
-	"github.com/gin-gonic/gin"
+	"github.com/rollout/rox-go/v5"
 )
 
+// Flags holds your feature flags
+type Flags struct {
+	EnableTutorial *rox.Flag
+}
+
+var flags = &Flags{
+	EnableTutorial: rox.NewFlag(false),
+}
+
 func main() {
-	router := gin.Default()
-	router.LoadHTMLGlob("templates/*")
-
-	router.GET("/", func(c *gin.Context) {
-		sha := getCommitSha()
-		color := getColor(sha)
-		textColor := getTextColor(color)
-		environment := getEnvironment()
-		c.HTML(http.StatusOK, "index.tmpl", gin.H{
-			"sha":         sha,
-			"color":       color,
-			"textColor":   textColor,
-			"environment": environment,
-		})
-	})
-
-	router.GET("/favicon.ico", func(c *gin.Context) {
-		c.File("./static/favicon.ico")
-	})
-
-	router.Run()
-}
-
-func getCommitSha() string {
-	content, err := ioutil.ReadFile("sha.txt")
+	// Initialize Rox
+	options := rox.NewOptionsBuilder().Build()
+	err := rox.Register("", flags)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to register flags: %v", err)
 	}
-	return strings.TrimSpace(string(content))
-}
 
-func getColor(sha string) string {
-	h := sha256.New()
-	h.Write([]byte(sha))
-	hash := hex.EncodeToString(h.Sum(nil))
-	return "#" + hash[:6]
-}
+	sdkKey := os.Getenv("ROX_SERVER_KEY")
+	if sdkKey == "" {
+		log.Fatal("ROX_SERVER_KEY environment variable is not set")
+	}
 
-func getTextColor(backgroundColor string) string {
-	r, _ := strconv.ParseInt(backgroundColor[1:3], 16, 64)
-	g, _ := strconv.ParseInt(backgroundColor[3:5], 16, 64)
-	b, _ := strconv.ParseInt(backgroundColor[5:7], 16, 64)
+	// Setup SDK
+	rox.Setup(sdkKey, options)
 
-	brightness := (r*299 + g*587 + b*114) / 1000
-
-	if brightness > 155 {
-		return "#000000"
+	// Check the flag value
+	if flags.EnableTutorial.IsEnabled(nil) {
+		fmt.Println("✅ Feature flag is ENABLED!")
 	} else {
-		return "#FFFFFF"
+		fmt.Println("🚫 Feature flag is DISABLED.")
 	}
-}
-
-func getEnvironment() string {
-	environment := os.Getenv("ENVIRONMENT")
-	if environment == "" {
-		environment = "development"
-	}
-	return environment
 }
