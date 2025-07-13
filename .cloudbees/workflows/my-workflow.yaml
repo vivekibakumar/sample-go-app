@@ -2,6 +2,12 @@ apiVersion: automation.cloudbees.io/v1alpha1
 kind: workflow
 name: My Go App Workflow
 
-# This section tells the pipeline to use the logic from your central template
-imports:
-  - path: cloudbees://shopfast-catalog/go-microservice-template.yml@main
+on:
+  push:
+    branches:
+      - "**"
+
+jobs:
+  build:
+    # This section tells the pipeline to use the logic from your central template
+    imports: cloudbees://shopfast-catalog/go-microservice-template.yml@main
