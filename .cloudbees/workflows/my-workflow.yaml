@@ -1,14 +1,12 @@
 apiVersion: automation.cloudbees.io/v1alpha1
 kind: workflow
-name: My Go App Workflow
-
+name: go-app-build
 on:
   push:
     branches:
       - "**"
-
 jobs:
   build:
-    # This is the correct way to import a template for a job.
-    # It replaces the entire "steps" section.
-    imports: cloudbees://shopfast-catalog/go-microservice-template.yml@main
+    use: golang-build-template
+    with:
+      go_version: "1.20"
